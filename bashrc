@@ -7,25 +7,51 @@ color_prompt=yes
 
 # Show git info
 parse_git_branch() {
- git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/'
+  git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
 }
 
 get_git_user() {
-  git config user.name
+  git config user.name 2> /dev/null
 }
 
 get_git_email() {
-  git config user.email
+  git config user.email 2> /dev/null
 }
 
-if [ "$color_prompt" = yes ]; then
- PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[01;36m\] $(parse_git_branch) $(get_git_user) $(get_git_email)\[\033[00m\]\n\$ '
-else
- PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w $(parse_git_branch) $(get_git_user) $(get_git_email)\n\$ '
+GIT_BRANCH=$(parse_git_branch)
+GIT_USER=$(get_git_user)
+GIT_EMAIL=$(get_git_email)
+
+# Build Prompt Header
+FG_YELLOW='\[\033[01;33m\]'
+FG_PURPLE='\[\033[01;35m\]'
+FG_GREEN='\[\033[01;32m\]'
+FG_BLUE='\[\033[01;34m\]'
+FG_RED='\[\033[01;31m\]'
+CLR='\[\033[00m\]'
+
+DIV_TK=' .: '
+LINE_AFTER=$FG_YELLOW'··················'$CLR'\n'
+DEBIAN_CHROOT='${debian_chroot:+($debian_chroot)}'
+USER_HOST_NAME=$FG_GREEN'\u@\h'$CLR
+CURRENT_PATH=$FG_BLUE'\w'$CLR
+
+PS1=$LINE_AFTER$DEBIAN_CHROOT$USER_HOST_NAME$DIV_TK$CURRENT_PATH
+
+if [ "$GIT_BRANCH" != "" ]; then
+  PS1=$PS1$DIV_TK$FG_RED$GIT_BRANCH$CLR
 fi
 
-# Draw Line After Command
-PS1='\[\033[01;33m\]··················\[\033[00m\]\n'$PS1
+if [ "$GIT_USER" != "" ]; then
+  PS1=$PS1$DIV_TK$FG_PURPLE$GIT_USER$CLR
+fi
+
+if [ "$GIT_EMAIL" != "" ]; then
+  PS1=$PS1$DIV_TK$FG_PURPLE$GIT_EMAIL$CLR
+fi
+
+PS1=$PS1'\n\$ '
 
 #Disable Colors
 unset color_prompt force_color_prompt
+
